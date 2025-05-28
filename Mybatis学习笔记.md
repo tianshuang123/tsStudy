@@ -135,5 +135,105 @@ for (User user : users) {
 sqlSession.close();
 ```
 
-## 3.Mapper代理开发
+## 3.Mapper代理开发步骤
 
+### 1.创建Mapper接口
+
+定义与SQL映射文件同名的Mapper接口，并且将Mapper接口和SQL映射文件放在同一目录下,路径具体为
+
+```java
+src/main/resources/com/ts/mapper/UserMapper.xml
+```
+
+### 2.设置SQL映射文件的namespace的属性能Mapper接口全限定名
+
+```xml
+<select id="selectAll" resultType="com.ts.pojo.User">
+    select * from tb_user;
+</select>
+```
+
+3.在Mapper接口中定义方法，方法名就是SQL映射文件中sql语句的id，并保持参数类型和返回值类型一致
+
+```java
+public interface UserMapper {
+    List<User> selectAll();
+}
+```
+
+### 4.编码
+
+通过SqlSession的getMapper方法获取Mapper接口的代理对象
+
+调用方对应方法完成sql的执行
+
+```java
+public class MybatisDemo2 {
+    public static void main(String[] args) throws IOException {
+        //1. 创建 SqlSessionFactory
+        String resource = "mybatis-config.xml";
+        InputStream inputStream = Resources.getResourceAsStream(resource);
+        SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
+
+        //2. 创建 SqlSession
+        SqlSession sqlSession = sqlSessionFactory.openSession();
+        UserMapper mapper = sqlSession.getMapper(UserMapper.class);
+        List<User> users = mapper.selectAll();
+        for (User user : users) {
+            System.out.println(user);
+        }
+        //3. 关闭 SqlSession
+        sqlSession.close();
+    }
+}
+```
+
+### 5.注意
+
+如果Mapper接口名称和SQL映射问价你名称相同，并在同一目录下，则可以使用包扫描的方式简化SQL映射文件的加载
+
+```xml
+ <mappers>
+     <package name="com.ts.mapper"/>
+ </mappers>
+```
+
+## 4.配置文件完成增删改查
+
+1.创建数据库表tb_brand
+
+```sql
+CREATE TABLE tb_brand (
+    id INT AUTO_INCREMENT PRIMARY KEY COMMENT '主键，自增ID',
+    brand_name VARCHAR(20) NOT NULL COMMENT '品牌名称',
+    company_name VARCHAR(20) NOT NULL COMMENT '企业名称',
+    ordered int COMMENT '排序字段',
+    description VARCHAR(255) COMMENT '描述信息',
+    status int COMMENT '状态 0禁用 1启动'
+) COMMENT='产品信息表';
+INSERT INTO tb_user (brand_name, company_name, ordered, description, status)
+VALUES
+('三只松鼠', '三只松鼠股份有限公司', 5,'好吃不上火', 0),
+('华为', '华为科技', 100,'万物互联', 1),
+('小米', '小米科技',50,'ARE you OK', 1);
+```
+
+
+
+2.实体类Brand
+
+```java
+@Data
+public class Brand {
+    private Integer id;          // 主键
+    private String brandName;    // 品牌名称
+    private String companyName; // 公司名称
+    private String description;  // 品牌描述
+    private Integer ordered;     // 排序
+    private Integer status;      // 状态（0-禁用，1-启用）
+}
+```
+
+3.测试用例
+
+4.安装MybatisX插件
