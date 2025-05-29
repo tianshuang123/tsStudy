@@ -200,7 +200,7 @@ public class MybatisDemo2 {
 
 ## 4.配置文件完成增删改查
 
-1.创建数据库表tb_brand
+### 1.创建数据库表tb_brand
 
 ```sql
 CREATE TABLE tb_brand (
@@ -218,9 +218,7 @@ VALUES
 ('小米', '小米科技',50,'ARE you OK', 1);
 ```
 
-
-
-2.实体类Brand
+### 2.实体类Brand
 
 ```java
 @Data
@@ -234,6 +232,104 @@ public class Brand {
 }
 ```
 
-3.测试用例
+### 3.创建BrandMapper接口
 
-4.安装MybatisX插件
+```java
+public interface BrandMapper {
+    List<Brand> selectAll();
+}
+```
+
+### 4.创建BrandMapper.xml
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ts.mapper.BrandMapper">
+    <resultMap id="brandResultMap" type="com.ts.pojo.Brand">
+        <result column="brand_name" property="brandName"/>
+        <result column="company_name" property="companyName"/>
+    </resultMap>
+   <select id="selectAll" resultMap="brandResultMap">
+           select * from tb_brand
+    </select>
+</mapper>
+```
+
+### 5.测试用例
+
+```java
+public class MybatisTest {
+    SqlSession sqlSession = null;
+    @Before
+    public void before() throws IOException {
+        //1. 创建 SqlSessionFactory
+        String resource = "mybatis-config.xml";
+        InputStream inputStream = Resources.getResourceAsStream(resource);
+        SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
+
+        //2. 创建 SqlSession
+        sqlSession = sqlSessionFactory.openSession();
+    }
+    
+    @After
+    public void after(){
+        //3. 关闭 SqlSession
+        sqlSession.close();
+    }
+    
+    @Test
+    public void selectAllTest(){
+        BrandMapper mapper = sqlSession.getMapper(BrandMapper.class);
+        List<Brand> brands = mapper.selectAll();
+        for (Brand brand : brands) {
+            System.out.println(brand);
+        }
+    }
+}
+```
+
+#### 1.查询所有
+
+```java
+@Test
+public void selectAllTest(){
+	BrandMapper mapper = sqlSession.getMapper(BrandMapper.class);
+	List<Brand> brands = mapper.selectAll();
+	for (Brand brand : brands) {
+		System.out.println(brand);
+	}
+}
+```
+
+#### 2.根据条件查询
+
+```java
+User selectUserById(int id);
+
+@Test
+public void selectById(){
+    BrandMapper mapper = sqlSession.getMapper(BrandMapper.class);
+    Brand brand = mapper.selectBrandById(1);
+    System.out.println(brand);
+}
+```
+
+```xml
+<select id="selectBrandById" parameterType="int" resultMap="brandResultMap">
+        select * from tb_brand where id = #{id}
+    </select>
+```
+
+```
+#{}:会将其替换为？，为了防止sql注入
+${}:拼接sql
+parameterType可以省略
+特殊字符处理：
+ 1.转义字符
+ 2.<![CDATA[ < ]]>
+```
+
+#### 3.多条件查询
